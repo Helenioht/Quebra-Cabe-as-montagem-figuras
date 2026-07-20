@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quebra-Cabeça Avançado</title>
+    <style>
+        :root {
+            --primary-color: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --border-color: #334155;
+            --accent-green: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 16px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            background: var(--card-bg);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-color);
+        }
+
+        header h1 {
+            text-align: center;
+            font-size: 1.6rem;
+            margin-bottom: 20px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .row-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        select, button {
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: #273549;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        select {
+            flex: 1;
+            outline: none;
+        }
+
+        button.btn-primary {
+            background-color: var(--primary-color);
+            border: none;
+        }
+
+        button.btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            flex: 1;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            left: 0; top: 0; opacity: 0;
+            width: 100%; height: 100%;
+            cursor: pointer;
+        }
+
+        .status-panel {
+            display: flex;
+            justify-content: space-between;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        #puzzle-holder {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            background: #090d16;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid var(--border-color);
+        }
+
+        #puzzle-board {
+            width: 100%;
+            height: 100%;
+            display: grid;
+            gap: 2px;
+            background: var(--border-color);
+        }
+
+        .tile {
+            background-repeat: no-repeat;
+            cursor: pointer;
+            transition: transform 0.15s ease;
+            user-select: none;
+            touch-action: none;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+
+        .tile.empty {
+            background: #090d16 !important;
+            cursor: default;
+            box-shadow: none;
+        }
+
+        /* Modal de Vitória */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.85);
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            padding: 16px;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            padding: 32px;
+            border-radius: 16px;
+            text-align: center;
+            width: 100%;
+            max-width: 360px;
+            border: 1px solid var(--accent-green);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content h2 {
+            color: var(--accent-green);
+            margin-bottom: 8px;
+            font-size: 1.8rem;
+        }
+
+        .modal-content p {
+            color: #94a3b8;
+            margin-bottom: 24px;
+        }
+
+        canvas#confetti {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 101;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Quebra-Cabeça</h1>
+        </header>
+
+        <div class="controls">
+            <div class="row-controls">
+                <select id="grid-select" title="Dificuldade">
+                    <option value="3">Fácil (3x3)</option>
+                    <option value="4" selected>Médio (4x4)</option>
+                    <option value="5">Difícil (5x5)</option>
+                </select>
+                <button id="btn-random" class="btn-primary">Nova Imagem</button>
+            </div>
+            <div class="row-controls">
+                <div class="file-input-wrapper">
+                    <button style="width: 100%;">Upload Imagem</button>
+                    <input type="file" id="file-upload" accept="image/*">
+                </div>
+            </div>
+        </div>
+
+        <div class="status-panel">
+            <div>Movimentos: <span id="move-count" style="font-weight:700;">0</span></div>
+            <div>Status: <span id="game-status" style="font-weight:700; color: #6366f1;">Em jogo</span></div>
+        </div>
+
+        <div id="puzzle-holder">
+            <div id="puzzle-board"></div>
+        </div>
+    </div>
+
+    <div id="victory-modal" class="modal">
+        <div class="modal-content">
+            <h2>Parabéns!</h2>
+            <p>Você resolveu o quebra-cabeça em <strong id="final-moves">0</strong> movimentos.</p>
+            <button id="btn-close-modal" class="btn-primary" style="width: 100%;">Jogar Novamente</button>
+        </div>
+    </div>
+
+    <canvas id="confetti"></canvas>
+
+    <script>
+        let gridSize = 4; 
+        let totalTiles = gridSize * gridSize;
+        let tilesOrder = []; 
+        let moveCount = 0;
+        let isPlaying = false;
+        let currentImgUrl = "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=500&auto=format&fit=crop";
+
+        const board = document.getElementById('puzzle-board');
+        const moveCountEl = document.getElementById('move-count');
+        const gameStatusEl = document.getElementById('game-status');
+        const fileUpload = document.getElementById('file-upload');
+        const btnRandom = document.getElementById('btn-random');
+        const gridSelect = document.getElementById('grid-select');
+        const victoryModal = document.getElementById('victory-modal');
+        const finalMovesEl = document.getElementById('final-moves');
+        const btnCloseModal = document.getElementById('btn-close-modal');
+        const confettiCanvas = document.getElementById('confetti');
+        const ctx = confettiCanvas.getContext('2d');
+
+        // Sintetizador de Áudio (Web Audio API) para evitar dependências externas
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playTone(freq, type, duration) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        const soundMove = () => playTone(600, 'sine', 0.08);
+        const soundWin = () => {
+            playTone(440, 'triangle', 0.15);
+            setTimeout(() => playTone(554.37, 'triangle', 0.15), 120);
+            setTimeout(() => playTone(659.25, 'triangle', 0.15), 240);
+            setTimeout(() => playTone(880, 'triangle', 0.4), 360);
+        };
+
+        function init() {
+            resizeConfettiCanvas();
+            window.addEventListener('resize', resizeConfettiCanvas);
+            loadNewImage(currentImgUrl);
+        }
+
+        function loadNewImage(url) {
+            currentImgUrl = url;
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.onload = () => resetGame();
+            img.src = url;
+        }
+
+        gridSelect.addEventListener('change', (e) => {
+            gridSize = parseInt(e.target.value, 10);
+            totalTiles = gridSize * gridSize;
+            resetGame();
+        });
+
+        btnRandom.addEventListener('click', () => {
+            const randomId = Math.floor(Math.random() * 1000);
+            loadNewImage(`https://picsum.photos/500/500?random=${randomId}`);
+        });
+
+        fileUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => loadNewImage(event.target.result);
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function resetGame() {
+            moveCount = 0;
+            moveCountEl.textContent = moveCount;
+            gameStatusEl.textContent = "Em jogo";
+            gameStatusEl.style.color = "#6366f1";
+            isPlaying = true;
+            generateSolvableGrid();
+            renderBoard();
+        }
+
+        function generateSolvableGrid() {
+            let solvable = false;
+            while (!solvable) {
+                tilesOrder = Array.from({length: totalTiles}, (_, i) => i);
+                
+                for (let i = tilesOrder.length - 2; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [tilesOrder[i], tilesOrder[j]] = [tilesOrder[j], tilesOrder[i]];
+                }
+
+                let inversions = 0;
+                for (let i = 0; i < totalTiles - 1; i++) {
+                    if (tilesOrder[i] === totalTiles - 1) continue;
+                    for (let j = i + 1; j < totalTiles - 1; j++) {
+                        if (tilesOrder[j] === totalTiles - 1) continue;
+                        if (tilesOrder[i] > tilesOrder[j]) inversions++;
+                    }
+                }
+
+                if (gridSize % 2 !== 0) {
+                    if (inversions % 2 === 0) solvable = true;
+                } else {
+                    const emptyIndex = tilesOrder.indexOf(totalTiles - 1);
+                    const emptyRowFromBottom = gridSize - Math.floor(emptyIndex / gridSize);
+                    if ((emptyRowFromBottom % 2 === 0 && inversions % 2 !== 0) || 
+                        (emptyRowFromBottom % 2 !== 0 && inversions % 2 === 0)) {
+                        solvable = true;
+                    }
+                }
+            }
+        }
+
+        function renderBoard() {
+            board.innerHTML = '';
+            board.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+            board.style.gridTemplateRows = `repeat(${gridSize}, 1fr)`;
+            
+            const tileSizePercentage = 100 / (gridSize - 1);
+
+            tilesOrder.forEach((tileValue, currentIndex) => {
+                const tile = document.createElement('div');
+                tile.classList.add('tile');
+
+                if (tileValue === totalTiles - 1) {
+                    tile.classList.add('empty');
+                } else {
+                    tile.style.backgroundImage = `url('${currentImgUrl}')`;
+                    tile.style.backgroundSize = `${gridSize * 100}% ${gridSize * 100}%`;
+                    
+                    const origRow = Math.floor(tileValue / gridSize);
+                    const origCol = tileValue % gridSize;
+                    
+                    const posX = gridSize === 1 ? 0 : origCol * tileSizePercentage;
+                    const posY = gridSize === 1 ? 0 : origRow * tileSizePercentage;
+                    tile.style.backgroundPosition = `${posX}% ${posY}%`;
+                    
+                    tile.addEventListener('click', () => handleTileClick(currentIndex));
+                }
+                board.appendChild(tile);
+            });
+        }
+
+        function handleTileClick(clickedIndex) {
+            if (!isPlaying) return;
+
+            const emptyIndex = tilesOrder.indexOf(totalTiles - 1);
+            const clickedRow = Math.floor(clickedIndex / gridSize);
+            const clickedCol = clickedIndex % gridSize;
+            const emptyRow = Math.floor(emptyIndex / gridSize);
+            const emptyCol = emptyIndex % gridSize;
+
+            if ((Math.abs(clickedRow - emptyRow) + Math.abs(clickedCol - emptyCol)) === 1) {
+                [tilesOrder[clickedIndex], tilesOrder[emptyIndex]] = [tilesOrder[emptyIndex], tilesOrder[clickedIndex]];
+                moveCount++;
+                moveCountEl.textContent = moveCount;
+                soundMove();
+                renderBoard();
+                checkWinCondition();
+            }
+        }
+
+        function checkWinCondition() {
+            if (tilesOrder.every((val, index) => val === index)) {
+                isPlaying = false;
+                gameStatusEl.textContent = "Resolvido";
+                gameStatusEl.style.color = "#10b981";
+                finalMovesEl.textContent = moveCount;
+                soundWin();
+                setTimeout(() => {
+                    victoryModal.style.display = 'flex';
+                    startConfetti();
+                }, 300);
+            }
+        }
+
+        btnCloseModal.addEventListener('click', () => {
+            victoryModal.style.display = 'none';
+            stopConfetti();
+            resetGame();
+        });
+
+        // Sistema de Animação de Confetes nativo
+        let confettiParticles = [];
+        let confettiAnimationId = null;
+
+        function resizeConfettiCanvas() {
+            confettiCanvas.width = window.innerWidth;
+            confettiCanvas.height = window.innerHeight;
+        }
+
+        function startConfetti() {
+            confettiParticles = Array.from({ length: 120 }, () => ({
+                x: Math.random() * confettiCanvas.width,
+                y: Math.random() * confettiCanvas.height - confettiCanvas.height,
+                r: Math.random() * 6 + 4,
+                d: Math.random() * confettiCanvas.height,
+                color: `hsl(${Math.random() * 360}, 80%, 60%)`,
+                tilt: Math.random() * 10 - 5,
+                tiltAngleIncremental: Math.random() * 0.07 + 0.02,
+                tiltAngle: 0
+            }));
+            animateConfetti();
+        }
+
+        function animateConfetti() {
+            ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+            let active = false;
+
+            confettiParticles.forEach((p) => {
+                p.tiltAngle += p.tiltAngleIncremental;
+                p.y += (Math.cos(p.d) + 3 + p.r / 2) / 2;
+                p.x += Math.sin(p.tiltAngle);
+                p.tilt = Math.sin(p.tiltAngle - p.r / 2) * 5;
+
+                if (p.y < confettiCanvas.height) active = true;
+
+                ctx.beginPath();
+                ctx.lineWidth = p.r;
+                ctx.strokeStyle = p.color;
+                ctx.moveTo(p.x + p.tilt + p.r / 2, p.y);
+                ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 2);
+                ctx.stroke();
+            });
+
+            if (active) {
+                confettiAnimationId = requestAnimationFrame(animateConfetti);
+            }
+        }
+
+        function stopConfetti() {
+            cancelAnimationFrame(confettiAnimationId);
+            ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+        }
+
+        init();
+    </script>
+</body>
+</html>
