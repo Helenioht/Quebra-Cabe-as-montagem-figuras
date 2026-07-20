@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quebra-CabeÁa AvanÁado</title>
+    <title>Quebra-Cabe√ßa Avan√ßado</title>
     <style>
         :root {
             --primary-color: #6366f1;
@@ -144,7 +144,7 @@
             box-shadow: none;
         }
 
-        /* Modal de VitÛria */
+        /* Modal de Vit√≥ria */
         .modal {
             display: none;
             position: fixed;
@@ -190,15 +190,15 @@
 
     <div class="container">
         <header>
-            <h1>Quebra-CabeÁa</h1>
+            <h1>Quebra-Cabe√ßa</h1>
         </header>
 
         <div class="controls">
             <div class="row-controls">
                 <select id="grid-select" title="Dificuldade">
-                    <option value="3">F·cil (3x3)</option>
-                    <option value="4" selected>MÈdio (4x4)</option>
-                    <option value="5">DifÌcil (5x5)</option>
+                    <option value="3">F√°cil (3x3)</option>
+                    <option value="4" selected>M√©dio (4x4)</option>
+                    <option value="5">Dif√≠cil (5x5)</option>
                 </select>
                 <button id="btn-random" class="btn-primary">Nova Imagem</button>
             </div>
@@ -222,8 +222,8 @@
 
     <div id="victory-modal" class="modal">
         <div class="modal-content">
-            <h2>ParabÈns!</h2>
-            <p>VocÍ resolveu o quebra-cabeÁa em <strong id="final-moves">0</strong> movimentos.</p>
+            <h2>Parab√©ns!</h2>
+            <p>Voc√™ resolveu o quebra-cabe√ßa em <strong id="final-moves">0</strong> movimentos.</p>
             <button id="btn-close-modal" class="btn-primary" style="width: 100%;">Jogar Novamente</button>
         </div>
     </div>
@@ -250,7 +250,7 @@
         const confettiCanvas = document.getElementById('confetti');
         const ctx = confettiCanvas.getContext('2d');
 
-        // Sintetizador de ¡udio (Web Audio API) para evitar dependÍncias externas
+        // Sintetizador de √Åudio (Web Audio API) para evitar depend√™ncias externas
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         
         function playTone(freq, type, duration) {
@@ -420,7 +420,7 @@
             resetGame();
         });
 
-        // Sistema de AnimaÁ„o de Confetes nativo
+        // Sistema de Anima√ß√£o de Confetes nativo
         let confettiParticles = [];
         let confettiAnimationId = null;
 
